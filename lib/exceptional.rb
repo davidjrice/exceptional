@@ -1,4 +1,6 @@
 $:.unshift File.dirname(__FILE__)
+require 'exceptional/integration/merb'
+require 'exceptional/merb'
 require 'exceptional/rails'
 require 'exceptional/deployed_environment'
 require 'exceptional/agent/worker'
@@ -127,6 +129,45 @@ module Exceptional
       end
     end
     
+    def handle_merb(exception, request, params)
+      log! "Handling #{exception.message}", 'info'
+      e = parse(exception)
+      # Additional data for Merb Exceptions
+      e.framework = "merb"
+      e.controller_name = params['controller']
+      e.action_name = params['action']
+      e.application_root = self.application_root
+      e.occurred_at = Time.now.to_s
+      e.url = "#{request.protocol}#{request.host}#{request.uri}"
+      # Need to remove rack data from environment hash
+      safe_environment = request.env.to_hash
+      safe_environment.delete_if { |k,v| k =~ /rack/ }
+      e.environment = safe_environment
+      
+      safe_session = {}
+      request.session.instance_variables.each do |v|
+        next if v =~ /cgi/
+        next if v =~ /db/
+        # remove prepended @'s
+        var = v.sub("@","")
+        safe_session[var] = request.session.instance_variable_get(v)
+      end
+      
+      e.session = safe_session
+      e.parameters = params ? params.to_hash : {}
+
+      if mode == :queue
+        worker.add_exception(e)
+      else # :direct mode
+        begin
+          post e
+        rescue
+          log! "Error posting data to Exceptional."
+          log! e.message
+          log! e.backtace.join("\n"), 'debug'
+        end
+      end
+    end
     # TODO these configuration methods & defaults should have their own class
     def remote_host
       @remote_host || ::REMOTE_HOST
@@ -224,4 +265,28 @@ module Exceptional
     
   end
   
+end
+
+# Hack to enable the gem as a Merb plugin.
+if defined?(Merb::Plugins)
+  Merb::BootLoader.after_app_loads do
+    def to_stderr(s)
+      STDERR.puts "** [Exceptional] " + s
+    end
+
+    config_file = File.join(Merb.root,"/config/exceptional.yml")
+    begin 
+      Exceptional.application_root = Merb.root
+      Exceptional.environment = Merb.environment.to_s
+
+      Exceptional.load_config(config_file)
+      if Exceptional.enabled?
+        Exceptional::Merb.init
+      end
+    
+    rescue Exception => e
+      to_stderr e
+      to_stderr "Plugin disabled."
+    end
+  end
 end

@@ -3,15 +3,12 @@ module Exceptional
     class Merb
       
       def self.init
-        Exceptional.deployed_environment = DeployedEnvironment.new
-        # If no server environment detected, don't perform magic. 
-        # Means rake, script/console etc perform as expected
-        return false unless Exceptional.deployed_environment.should_start_worker?
-        
+        # With Merb, we can't determine the deployed environment on boot as that
+        # appears to load after the app & plugins.
         setup_log
         Exceptional.log_config_info
         
-        if Exceptional.authenticate           
+        if Exceptional.authenticate
         
           if Exceptional.mode == :queue
             Exceptional.worker = Agent::Worker.new(Exceptional.log)
@@ -20,8 +17,8 @@ module Exceptional
             end
           end
           
-          require File.join(File.dirname(__FILE__), 'integration', 'merb')
-          
+          # Install hook in Merb's Exceptions controller.
+          Exceptions.send(:include, Exceptional::Integration::Merb)
           
           at_exit do
             if Exceptional.mode == :queue         
@@ -31,7 +28,7 @@ module Exceptional
         else
           Exceptional.log! "Plugin not authenticated, check your API Key"
           Exceptional.log! "Disabling Plugin."
-        end
+        end        
       end
       
       def self.setup_log

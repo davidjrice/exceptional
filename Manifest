@@ -1,4 +1,3 @@
-exceptional.gemspec
 exceptional.yml
 History.txt
 init.rb
@@ -6,7 +5,9 @@ install.rb
 lib/exceptional/agent/worker.rb
 lib/exceptional/deployed_environment.rb
 lib/exceptional/exception_data.rb
+lib/exceptional/integration/merb.rb
 lib/exceptional/integration/rails.rb
+lib/exceptional/merb.rb
 lib/exceptional/rails.rb
 lib/exceptional/version.rb
 lib/exceptional.rb

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "exceptional"
-  s.version  = "0.0.1"
+  s.version  = "0.0.2"
   s.date     = "2008-10-13"
   s.summary  = "Exceptional is the core Ruby library for communicating with http://getexceptional.com (hosted error tracking service)"
   s.email    = "david@getexceptional.com"
@@ -19,7 +19,9 @@ Gem::Specification.new do |s|
 		"lib/exceptional/agent/worker.rb",
     "lib/exceptional/deployed_environment.rb",
     "lib/exceptional/exception_data.rb",
+    "lib/exceptional/integration/merb.rb",
     "lib/exceptional/integration/rails.rb",
+    "lib/exceptional/merb.rb",
     "lib/exceptional/rails.rb",
     "lib/exceptional/version.rb",
     "lib/exceptional.rb"]
