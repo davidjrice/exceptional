@@ -1,5 +1,6 @@
 module Exceptional
-      
+    # TODO this class could really be 'drier', merge with Exceptional::Rails
+    # perhaps create an initializers module.
     class Merb
       
       def self.init
